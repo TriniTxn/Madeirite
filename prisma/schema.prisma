@@ -17,6 +17,7 @@ model Cliente {
 model Projeto {
   id          Int             @id @default(autoincrement())
   nome        String
+  status      String          @default("Em Produção")
   dataEntrega DateTime
   anotacoes   String?
   cliente     Cliente         @relation(fields: [clienteId], references: [id])
