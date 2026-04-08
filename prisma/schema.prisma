@@ -1,0 +1,43 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Cliente {
+  id       Int       @id @default(autoincrement())
+  nome     String
+  telefone String?
+  projetos Projeto[]
+}
+
+model Projeto {
+  id          Int             @id @default(autoincrement())
+  nome        String
+  dataEntrega DateTime
+  anotacoes   String?
+  cliente     Cliente         @relation(fields: [clienteId], references: [id])
+  clienteId   Int
+  itens       ChecklistItem[]
+  criadoEm    DateTime        @default(now())
+}
+
+model ChecklistItem {
+  id        Int     @id @default(autoincrement())
+  titulo    String
+  feito     Boolean @default(false)
+  ordem     Int
+  projeto   Projeto @relation(fields: [projetoId], references: [id])
+  projetoId Int
+}
+
+model Material {
+  id         Int    @id @default(autoincrement())
+  nome       String
+  unidade    String
+  quantidade Float
+  minimo     Float
+}
