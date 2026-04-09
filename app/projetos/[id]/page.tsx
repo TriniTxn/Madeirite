@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ChevronLeft, Calendar, User, Clock, CheckCircle2, Circle } from "lucide-react";
 import { toggleItemStatus, updateAnotacoes, adicionarItem } from "./actions";
 import { AnotacoesAutoSave } from "@/components/anotacoes-auto-save";
+import { ModalEditarProjeto } from "@/components/modal-editar-projeto";
+import { ChecklistDraggable } from "@/components/checklist-draggable";
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -44,6 +46,16 @@ export default async function DetalheProjetoPage({ params }: Props) {
                             Reference: #{String(projeto.id).padStart(4, "0")}
                         </span>
                         <StatusBadge status={projeto.status} />
+                        <ModalEditarProjeto projeto={{
+                            id: projeto.id,
+                            nome: projeto.nome,
+                            status: projeto.status,
+                            dataEntrega: projeto.dataEntrega,
+                            cliente: {
+                                nome: projeto.cliente.nome,
+                                telefone: projeto.cliente.telefone
+                            }
+                        }} />
                     </div>
                     <h1 className="text-4xl font-bold tracking-tighter text-white">
                         {projeto.nome}
@@ -90,45 +102,7 @@ export default async function DetalheProjetoPage({ params }: Props) {
                     </form>
 
                     {/* Lista de itens */}
-                    <div className="grid gap-3">
-                        {projeto.itens.length === 0 ? (
-                            <p className="text-zinc-700 text-xs uppercase tracking-widest text-center py-8 border border-dashed border-zinc-800 rounded-2xl">
-                                Nenhuma task adicionada
-                            </p>
-                        ) : (
-                            projeto.itens.map((item) => (
-                                <form key={item.id} action={toggleItemStatus}>
-                                    <input type="hidden" name="itemId" value={item.id} />
-                                    <input type="hidden" name="projetoId" value={projeto.id} />
-                                    <button
-                                        type="submit"
-                                        className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 group ${item.feito
-                                            ? "bg-zinc-950/40 border-zinc-900 opacity-50"
-                                            : "bg-zinc-900/20 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900/40"
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-1 rounded-full border ${item.feito
-                                                ? "bg-emerald-500/20 border-emerald-500/50"
-                                                : "border-zinc-700 group-hover:border-zinc-500"
-                                                }`}>
-                                                {item.feito
-                                                    ? <CheckCircle2 className="text-emerald-500" size={18} />
-                                                    : <div className="w-[18px] h-[18px]" />
-                                                }
-                                            </div>
-                                            <span className={`text-sm tracking-tight ${item.feito
-                                                ? "text-zinc-600 line-through"
-                                                : "text-zinc-200 font-medium"
-                                                }`}>
-                                                {item.titulo}
-                                            </span>
-                                        </div>
-                                    </button>
-                                </form>
-                            ))
-                        )}
-                    </div>
+                    <ChecklistDraggable itens={projeto.itens} projetoId={projeto.id} />
                 </div>
 
                 {/* Sidebar de Observações */}
