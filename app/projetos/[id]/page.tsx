@@ -84,23 +84,6 @@ export default async function DetalheProjetoPage({ params }: Props) {
                         <CheckCircle2 size={14} /> Tasks de Produção
                     </h3>
 
-                    {/* Formulário adicionar item */}
-                    <form action={adicionarItem} className="flex gap-2">
-                        <input type="hidden" name="projetoId" value={projeto.id} />
-                        <input
-                            name="titulo"
-                            required
-                            placeholder="Nova task... ex: Cortar MDF"
-                            className="flex-1 bg-zinc-900/20 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 outline-none transition-all"
-                        />
-                        <button
-                            type="submit"
-                            className="px-4 py-2.5 bg-white text-black text-xs font-bold rounded-xl hover:bg-zinc-200 transition-all active:scale-95"
-                        >
-                            + Add
-                        </button>
-                    </form>
-
                     {/* Lista de itens */}
                     <ChecklistDraggable itens={projeto.itens} projetoId={projeto.id} />
                 </div>

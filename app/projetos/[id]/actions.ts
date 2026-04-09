@@ -108,6 +108,8 @@ export async function reordenarItens(formData: FormData) {
   const projetoId = parseInt(formData.get("projetoId") as string);
   const ordem: number[] = JSON.parse(formData.get("ordem") as string);
 
+  console.log("Ordem recebida:", ordem);
+  
   await Promise.all(
     ordem.map((id, index) =>
       prisma.checklistItem.update({
