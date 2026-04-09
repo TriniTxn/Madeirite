@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db"
 import { Search, Filter, Plus } from "lucide-react"
 import { ModalNovoProjeto } from "@/components/modal-novo-projeto"
-import { Link } from "@heroui/link"
+import Link from "next/link"
 
 export default async function ProjetosPage() {
   const projetos = await prisma.projeto.findMany({
@@ -81,13 +81,7 @@ function ProjetoCard({ id, titulo, cliente, status, progresso }: {
         <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider bg-zinc-950 px-2 py-1 rounded-md border border-zinc-800">
           ID-{String(id).padStart(4, "0")}
         </span>
-        <div className={`w-2 h-2 rounded-full ${
-          status === "Finalizado"
-            ? "bg-emerald-500"
-            : status === "Aguardando Material"
-            ? "bg-amber-500"
-            : "bg-orange-400"
-        } shadow-[0_0_8px_currentColor]`} />
+        <StatusBadge status={status} />
       </div>
 
       <h3 className="text-lg font-bold text-white mb-1 group-hover:text-zinc-200 transition-colors">
