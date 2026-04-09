@@ -3,12 +3,20 @@
 import { useTransition, useRef } from "react"
 import { adicionarItem } from "@/app/projetos/[id]/actions"
 
-type Props = {
-  projetoId: number
-  onAdicionado: (item: { id: number; titulo: string; feito: boolean; ordem: number }) => void
+type Item = {
+  id: number
+  titulo: string
+  feito: boolean
+  ordem: number
 }
 
-export function AdicionarItem({ projetoId, onAdicionado }: Props) {
+type Props = {
+  projetoId: number
+  onAdicionado: (item: Item) => void
+  onIdRealizado: (idTemp: number, idReal: number) => void  // ← novo
+}
+
+export function AdicionarItem({ projetoId, onAdicionado, onIdRealizado }: Props) {
   const [isPending, startTransition] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -17,24 +25,17 @@ export function AdicionarItem({ projetoId, onAdicionado }: Props) {
     const titulo = inputRef.current?.value?.trim()
     if (!titulo) return
 
-    // Atualiza visual imediatamente com ID temporário
-    const itemTemp = {
-      id: Date.now(),
-      titulo,
-      feito: false,
-      ordem: 9999,
-    }
-    onAdicionado(itemTemp)
+    const idTemp = Date.now()
+    onAdicionado({ id: idTemp, titulo, feito: false, ordem: 9999 })
 
-    // Limpa o input na hora
     if (inputRef.current) inputRef.current.value = ""
 
-    // Persiste no banco em background
     startTransition(async () => {
       const formData = new FormData()
       formData.append("projetoId", String(projetoId))
       formData.append("titulo", titulo)
-      await adicionarItem(formData)
+      const idReal = await adicionarItem(formData)
+      if (idReal) onIdRealizado(idTemp, idReal)  // ← substitui ID temp pelo real
     })
   }
 
