@@ -39,11 +39,13 @@ function ItemSortavel({
     projetoId,
     onToggle,
     onRemover,
+    temporario,
 }: {
     item: Item
     projetoId: number
     onToggle: (id: number) => void
     onRemover: (id: number) => void
+    temporario: boolean
 }) {
     const {
         attributes,
@@ -52,7 +54,7 @@ function ItemSortavel({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: item.id })
+    } = useSortable({ id: item.id, disabled: temporario })
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -153,6 +155,12 @@ export function ChecklistDraggable({ itens, projetoId }: Props) {
         setItems((prev) => [...prev, item])
     }
 
+    function handleIdRealizado(idTemp: number, idReal: number) {
+    setItems((prev) =>
+        prev.map((i) => (i.id === idTemp ? { ...i, id: idReal } : i))
+        )
+    }
+
     async function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event
         if (!over || active.id === over.id) return
@@ -173,7 +181,11 @@ export function ChecklistDraggable({ itens, projetoId }: Props) {
 
     return (
         <div className="space-y-4">
-            <AdicionarItem projetoId={projetoId} onAdicionado={handleAdicionado} />
+            <AdicionarItem 
+                projetoId={projetoId} 
+                onAdicionado={handleAdicionado}
+                onIdRealizado={handleIdRealizado}
+             />
 
             {items.length === 0 ? (
                 <p className="text-zinc-700 text-xs uppercase tracking-widest text-center py-8 border border-dashed border-zinc-800 rounded-2xl">
@@ -197,6 +209,7 @@ export function ChecklistDraggable({ itens, projetoId }: Props) {
                                     projetoId={projetoId}
                                     onToggle={handleToggle}
                                     onRemover={handleRemover}
+                                    temporario={item.id >= 1000000000000}
                                 />
                             ))}
                         </div>

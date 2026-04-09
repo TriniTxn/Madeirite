@@ -35,25 +35,26 @@ export async function updateAnotacoes(formData: FormData) {
 }
 
 export async function adicionarItem(formData: FormData) {
-    const projetoId = parseInt(formData.get("projetoId") as string);
-    const titulo = formData.get("titulo") as string;
+  const projetoId = parseInt(formData.get("projetoId") as string);
+  const titulo = formData.get("titulo") as string;
 
-    if (!titulo?.trim()) return;
+  if (!titulo?.trim()) return;
 
-    const ultimoItem = await prisma.checklistItem.findFirst({
-        where: { projetoId },
-        orderBy: { ordem: "desc" }
-    });
-    
-    await prisma.checklistItem.create({
-        data: {
-            titulo: titulo.trim(),
-            projetoId,
-            ordem: (ultimoItem?.ordem || 0) + 1,
-        }
-    });
-    
-    revalidatePath(`/projetos/${projetoId}`);
+  const ultimoItem = await prisma.checklistItem.findFirst({
+    where: { projetoId },
+    orderBy: { ordem: "desc" },
+  });
+
+  const novoItem = await prisma.checklistItem.create({
+    data: {
+      titulo: titulo.trim(),
+      projetoId,
+      ordem: (ultimoItem?.ordem ?? 0) + 1,
+    },
+  });
+
+  revalidatePath(`/projetos/${projetoId}`);
+  return novoItem.id  // ← retorna o ID real
 }
 
 export async function editarProjeto(formData: FormData) {
