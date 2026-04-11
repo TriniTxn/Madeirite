@@ -6,6 +6,7 @@ import { toggleItemStatus, updateAnotacoes, adicionarItem } from "./actions";
 import { AnotacoesAutoSave } from "@/components/anotacoes-auto-save";
 import { ModalEditarProjeto } from "@/components/modal-editar-projeto";
 import { ChecklistDraggable } from "@/components/checklist-draggable";
+import { formatarData } from "@/lib/utils";
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -66,7 +67,7 @@ export default async function DetalheProjetoPage({ params }: Props) {
                         </span>
                         <span className="flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-zinc-800">
                             <Calendar size={14} className="text-zinc-600" />
-                            Entrega: {new Date(projeto.dataEntrega).toLocaleDateString('pt-PT')}
+                            Entrega: {formatarData(projeto.dataEntrega)}
                         </span>
                     </div>
                 </div>
