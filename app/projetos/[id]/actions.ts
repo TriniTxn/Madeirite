@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db";
+import { enviarMensagemWhatsApp } from "@/lib/whatsapp";
 import { TicketPlusIcon } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { title } from "process";
@@ -17,6 +18,58 @@ export async function toggleItemStatus(formData: FormData) {
     where: { id: itemId },
     data: { feito: !item.feito }
   });
+
+  // Alerta de entrega próxima (Logic Update)
+const projeto = await prisma.projeto.findUnique({
+  where: { id: projetoId },
+  include: { cliente: true, itens: true }
+});
+
+if (projeto && !["Finalizado", "Cancelado"].includes(projeto.status)) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // Zera horas para comparação de dias inteiros
+
+  const entrega = new Date(projeto.dataEntrega);
+  entrega.setHours(0, 0, 0, 0);
+
+  // Calcula a diferença em dias
+  const diffTime = entrega.getTime() - hoje.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Configuração de alertas por prioridade
+  let prefixo = "";
+  let enviar = false;
+
+  if (diffDays === 7) {
+    prefixo = "📅 *ALERTA SEMANAL*";
+    enviar = true;
+  } else if (diffDays === 3) {
+    prefixo = "⏳ *PRAZO CURTO (3 DIAS)*";
+    enviar = true;
+  } else if (diffDays === 1) {
+    prefixo = "🚨 *ENTREGA AMANHÃ*";
+    enviar = true;
+  } else if (diffDays === 0) {
+    prefixo = "🚩 *ENTREGA HOJE*";
+    enviar = true;
+  }
+
+  if (enviar) {
+    const feitos = projeto.itens.filter(i => i.feito).length;
+    const total = projeto.itens.length;
+    const progresso = total > 0 ? Math.round((feitos / total) * 100) : 0;
+
+    const mensagem = 
+      `${prefixo}\n\n` +
+      `Projeto: *${projeto.nome}*\n` +
+      `Cliente: *${projeto.cliente.nome}*\n` +
+      `Progresso: ${progresso}% (${feitos}/${total} tarefas)\n` +
+      `Data: ${entrega.toLocaleDateString("pt-BR")}\n\n` +
+      `_Verifique os detalhes no painel da marcenaria._`;
+
+    await enviarMensagemWhatsApp(mensagem);
+  }
+}
 
   revalidatePath(`/projetos/${projetoId}`);
   revalidatePath("/projetos"); // Atualiza a barra de progresso na lista também
