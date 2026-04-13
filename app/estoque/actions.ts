@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db"
+import { enviarMensagemWhatsApp } from "@/lib/whatsapp"
 import { revalidatePath } from "next/cache"
 
 export async function adicionarMaterial(formData: FormData) {
@@ -10,15 +11,9 @@ export async function adicionarMaterial(formData: FormData) {
   const quantidade = parseFloat(formData.get("quantidade") as string)
   const minimo = parseFloat(formData.get("minimo") as string)
 
-  try {
-    await prisma.material.create({
-      data: { nome, categoria, unidade, quantidade, minimo }
-    })
-    revalidatePath("/estoque")
-  } catch (error) {
-    console.error("Erro ao criar material:", error)
-    throw error
-  }
+  await prisma.material.create({
+    data: { nome, categoria, unidade, quantidade, minimo }
+  })
 
   revalidatePath("/estoque")
 }
@@ -55,6 +50,22 @@ export async function atualizarMaterial(formData: FormData) {
     where: { id },
     data: { nome, categoria, unidade, quantidade, minimo }
   })
+
+  if (quantidade === 0) {
+    await enviarMensagemWhatsApp(
+      `🚨 *MadeiraApp — Estoque Crítico*\n\n` +
+      `O material *${nome}* está zerado!\n` +
+      `Categoria: ${categoria}\n` +
+      `Providencie a reposição urgente.`
+    )
+  } else if (quantidade <= minimo) {
+    await enviarMensagemWhatsApp(
+      `⚠️ *MadeiraApp — Estoque Baixo*\n\n` +
+      `O material *${nome}* está abaixo do mínimo.\n` +
+      `Quantidade atual: ${quantidade} ${unidade}\n` +
+      `Mínimo configurado: ${minimo} ${unidade}`
+    )
+  }
 
   revalidatePath("/estoque")
 }
