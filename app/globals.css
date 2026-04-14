@@ -38,3 +38,31 @@ body {
     text-wrap: balance;
   }
 }
+
+@layer base {
+  /* Estilização para Chrome, Edge e Safari */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #27272a;
+    border-radius: 9999px;
+    border: 1px solid #09090b;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #52525b;
+  }
+
+  /* Estilização para Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #27272a transparent; /* bg-zinc-800 e fundo transparente */
+  }
+}
