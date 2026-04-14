@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db"
-import { Search, Filter, Plus } from "lucide-react"
+import { Search, Filter, Plus, MessageCircle, Calendar, ChevronRight, LayoutGrid } from "lucide-react"
 import { ModalNovoProjeto } from "@/components/modal-novo-projeto"
 import Link from "next/link"
+import { formatarData } from "@/lib/utils"
 
 export default async function ProjetosPage() {
   const projetos = await prisma.projeto.findMany({
@@ -10,38 +11,47 @@ export default async function ProjetosPage() {
   })
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 max-w-[1400px] mx-auto">
+      {/* Header Estilo Centro de Comando */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-800/50 pb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white">Projetos</h1>
-          <p className="text-zinc-500 text-sm mt-1">Gerencie e acompanhe a execução dos pedidos.</p>
+          <div className="flex items-center gap-2 mb-2">
+            <LayoutGrid size={14} className="text-zinc-500" />
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em]">Gestão de Pedidos</span>
+          </div>
+          <h1 className="text-4xl font-bold tracking-tighter text-white">Projetos</h1>
+          <p className="text-zinc-500 text-sm mt-1">Acompanhe a linha de produção em tempo real.</p>
         </div>
         <ModalNovoProjeto />
       </div>
 
-      {/* Barra de Filtros */}
-      <div className="flex flex-wrap items-center gap-3 p-2 bg-zinc-900/30 border border-zinc-800 rounded-2xl">
-        <div className="flex-1 min-w-[200px] relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+      {/* Barra de Filtros Refinada */}
+      <div className="flex flex-col md:flex-row items-center gap-4 p-3 bg-zinc-950/50 border border-zinc-800/50 rounded-2xl shadow-xl">
+        <div className="flex-1 w-full relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
           <input
             type="text"
-            placeholder="Buscar projeto..."
-            className="w-full bg-transparent border-none focus:ring-0 text-sm text-zinc-300 pl-10"
+            placeholder="Pesquisar por projeto ou cliente..."
+            className="w-full bg-zinc-900/30 border-none focus:ring-1 focus:ring-amber-500/30 rounded-xl text-sm text-zinc-300 pl-12 h-11 transition-all"
           />
         </div>
-        <div className="h-6 w-[1px] bg-zinc-800 hidden md:block" />
-        <button className="flex items-center gap-2 px-4 py-1.5 text-xs font-medium text-zinc-400 hover:text-white transition-colors">
-          <Filter size={14} />
-          Filtrar por Status
-        </button>
+        
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-xs font-bold text-zinc-400 bg-zinc-900/50 border border-zinc-800 rounded-xl hover:text-white hover:border-zinc-600 transition-all">
+            <Filter size={14} />
+            FILTRAR STATUS
+          </button>
+        </div>
       </div>
 
-      {/* Grid de Projetos */}
+      {/* Grid de Projetos Operacional */}
       {projetos.length === 0 ? (
-        <div className="border border-dashed border-zinc-800 rounded-2xl p-20 text-center">
-          <p className="text-zinc-600 text-xs uppercase tracking-widest">
-            Nenhum projeto detectado
+        <div className="border border-dashed border-zinc-800 rounded-3xl p-24 text-center bg-zinc-900/10">
+          <div className="inline-flex p-4 rounded-full bg-zinc-900 border border-zinc-800 mb-4 text-zinc-700">
+            <Plus size={32} />
+          </div>
+          <p className="text-zinc-500 text-sm font-medium uppercase tracking-widest">
+            Nenhum projeto em rota de colisão.
           </p>
         </div>
       ) : (
@@ -54,11 +64,10 @@ export default async function ProjetosPage() {
             return (
               <ProjetoCard
                 key={projeto.id}
-                id={projeto.id}
-                titulo={projeto.nome}
-                cliente={projeto.cliente.nome}
-                status={projeto.status}
+                projeto={projeto}
                 progresso={progresso}
+                feitos={feitos}
+                total={total}
               />
             )
           })}
@@ -68,47 +77,78 @@ export default async function ProjetosPage() {
   )
 }
 
-function ProjetoCard({ id, titulo, cliente, status, progresso }: {
-  id: number
-  titulo: string
-  cliente: string
-  status: string
-  progresso: number
-}) {
+function ProjetoCard({ projeto, progresso, feitos, total }: any) {
+  const hoje = new Date()
+  const entrega = new Date(projeto.dataEntrega)
+  const diffDias = Math.ceil((entrega.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+  const isAtrasado = diffDias < 0 && projeto.status !== "Finalizado"
+
   return (
-    <div className="group bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 hover:border-zinc-600 transition-all duration-300">
-      <div className="flex justify-between items-start mb-4">
-        <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider bg-zinc-950 px-2 py-1 rounded-md border border-zinc-800">
-          ID-{String(id).padStart(4, "0")}
-        </span>
-        <StatusBadge status={status} />
+    /* CONTAINER PRINCIPAL: Agora com fundo sólido e hover de subida */
+    <div className="group relative bg-[#09090b] border border-zinc-800 rounded-2xl p-6 transition-all duration-300 
+                    hover:border-zinc-400 hover:-translate-y-2 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.8)]">
+      
+      {/* HEADER: Data e ID com contraste */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col gap-1">
+          <StatusBadge status={projeto.status} />
+          <span className="text-[10px] font-mono text-zinc-600">ID-{String(projeto.id).padStart(4, "0")}</span>
+        </div>
+        
+        <div className={`text-right ${
+          isAtrasado ? "text-red-500" :
+          projeto.status === "Finalizado" ? "text-emerald-500" :
+          "text-zinc-500"
+        }`}>
+          <div className="flex items-center justify-end gap-1 text-[10px] font-bold uppercase tracking-wider">
+            <Calendar size={12} />
+            {projeto.status === "Finalizado" ? "Finalizado" :
+            isAtrasado ? "Atrasado" :
+            diffDias === 0 ? "Hoje" :
+            `Em ${diffDias}d`}
+          </div>
+          <span className="text-[9px] font-mono opacity-60">{formatarData(projeto.dataEntrega)}</span>
+        </div>
       </div>
 
-      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-zinc-200 transition-colors">
-        {titulo}
-      </h3>
-      <p className="text-zinc-500 text-sm mb-6">{cliente}</p>
+      {/* TÍTULO: Branco real para leitura imediata */}
+      <div className="mb-8">
+        <h3 className="text-xl font-bold text-white group-hover:text-amber-500 transition-colors truncate">
+          {projeto.nome}
+        </h3>
+        <p className="text-zinc-500 text-sm mt-1 font-medium">{projeto.cliente.nome}</p>
+      </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-[10px] font-mono uppercase tracking-widest text-zinc-500">
-          <span>Progresso</span>
-          <span>{progresso}%</span>
+      {/* PROGRESSO: Estilo "Capsule" mais moderno */}
+      <div className="space-y-3 mb-6">
+        <div className="flex justify-between items-end">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            {feitos} de {total} tarefas
+          </span>
+          <span className="text-lg font-black text-white">{progresso}%</span>
         </div>
-        <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
           <div
-            className="h-full bg-white transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+            className={`h-full transition-all duration-1000 ease-out ${
+              isAtrasado ? 'bg-red-600' : 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+            }`}
             style={{ width: `${progresso}%` }}
           />
         </div>
       </div>
 
-      <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center">
-        <span className="text-xs font-medium text-zinc-400">{status}</span>
+      {/* RODAPÉ: Ações com hover individual */}
+      <div className="pt-4 border-t border-zinc-800/50 flex justify-between items-center">
+          <button className="p-2 rounded-lg text-zinc-600 hover:text-emerald-500 hover:bg-emerald-500/5 transition-all">
+            <MessageCircle size={18} />
+          </button>
+          
           <Link
-            href={`/projetos/${id}`}
-            className="text-xs text-white underline underline-offset-4 hover:text-zinc-300 transition-colors"
+            href={`/projetos/${projeto.id}`}
+            className="flex items-center gap-2 text-xs font-bold text-zinc-400 group-hover:text-white transition-all"
           >
-          Ver detalhes
+            DETALHES 
+            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
       </div>
     </div>
@@ -123,8 +163,9 @@ function StatusBadge({ status }: { status: string }) {
   }
 
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${styles[status] || styles["Em andamento"]}`}>
-      {status.toUpperCase()}
-    </span>
+    <div className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-tighter ${styles[status] || styles["Em andamento"]}`}>
+      <span className="w-1 h-1 rounded-full bg-current animate-pulse" />
+      {status}
+    </div>
   )
 }
