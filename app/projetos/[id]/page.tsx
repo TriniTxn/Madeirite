@@ -79,28 +79,52 @@ export default async function DetalheProjetoPage({ params }: Props) {
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Checklist Principal */}
+                {/* Checklist Principal — ocupa 2/3 */}
                 <div className="lg:col-span-2 space-y-4">
+
+                    {/* Imagem do projeto — Moldura que se adapta sem vazar */}
+                    {projeto.fotoUrl && (
+                        <div className="flex justify-start mb-8">
+                            <div className="inline-block rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40 p-0 line-height-0">
+                                <img
+                                    src={projeto.fotoUrl}
+                                    alt="Foto do projeto"
+                                    className="max-w-full md:max-w-[400px] h-auto block object-contain"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Upload quando não tem imagem */}
+                    {!projeto.fotoUrl && (
+                    <ImagemProjeto
+                        projetoId={projeto.id}
+                        imagemAtual={projeto.fotoUrl}
+                    />
+                    )}
+
                     <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                        <CheckCircle2 size={14} /> Tasks de Produção
+                    <CheckCircle2 size={14} /> Tasks de Produção
                     </h3>
 
-                    {/* Lista de itens */}
                     <ChecklistDraggable itens={projeto.itens} projetoId={projeto.id} />
                 </div>
 
-                {/* Sidebar de Observações */}
+                {/* Sidebar — ocupa 1/3 */}
                 <div className="space-y-6">
-                <ImagemProjeto
-                    projetoId={projeto.id}
-                    imagemAtual={projeto.imagemUrl}
-                />
-                <AnotacoesAutoSave
+                    {/* Mostra o componente de upload na sidebar só quando já tem imagem */}
+                    {projeto.fotoUrl && (
+                    <ImagemProjeto
+                        projetoId={projeto.id}
+                        imagemAtual={projeto.fotoUrl}
+                    />
+                    )}
+                    <AnotacoesAutoSave
                     projetoId={projeto.id}
                     valorInicial={projeto.anotacoes}
-                />
+                    />
                 </div>
-            </div>
+                </div>
         </div>
     );
 }
