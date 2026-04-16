@@ -4,6 +4,9 @@ import type { NextConfig } from "next";
 * Espero não ter problemas ao subir em prod ç-ç
 */
 const nextConfig: NextConfig = {
+  images: {
+    domains: ["xbhmrfkcuxynvbayzjbd.supabase.co"]
+  },
   experimental: {
     serverActions: {
       allowedOrigins: [

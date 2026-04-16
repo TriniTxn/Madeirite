@@ -186,3 +186,15 @@ export async function removerItem(formData: FormData) {
 
   revalidatePath(`/projetos/${projetoId}`);
 }
+
+export async function salvarImagemProjeto(formData: FormData) {
+  const projetoId = parseInt(formData.get("projetoId") as string)
+  const imagemUrl = formData.get("imagemUrl") as string
+
+  await prisma.projeto.update({
+    where: { id: projetoId },
+    data: { fotoUrl: imagemUrl || null }
+  })
+
+  revalidatePath(`/projetos/${projetoId}`)
+}
