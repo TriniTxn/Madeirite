@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Calendar, User, Clock, CheckCircle2, Circle } from "lucide-react";
-import { toggleItemStatus, updateAnotacoes, adicionarItem } from "./actions";
+import { ChevronLeft, Calendar, User, CheckCircle2 } from "lucide-react";
 import { AnotacoesAutoSave } from "@/components/anotacoes-auto-save";
 import { ModalEditarProjeto } from "@/components/modal-editar-projeto";
 import { ChecklistDraggable } from "@/components/checklist-draggable";
 import { formatarData } from "@/lib/utils";
+import { ImagemProjeto } from "@/components/imagem-projeto"
 
 type Props = {
     params: Promise<{ id: string }>;
@@ -91,10 +91,14 @@ export default async function DetalheProjetoPage({ params }: Props) {
 
                 {/* Sidebar de Observações */}
                 <div className="space-y-6">
-                    <AnotacoesAutoSave
-                        projetoId={projeto.id}
-                        valorInicial={projeto.anotacoes}
-                    />
+                <ImagemProjeto
+                    projetoId={projeto.id}
+                    imagemAtual={projeto.imagemUrl}
+                />
+                <AnotacoesAutoSave
+                    projetoId={projeto.id}
+                    valorInicial={projeto.anotacoes}
+                />
                 </div>
             </div>
         </div>
