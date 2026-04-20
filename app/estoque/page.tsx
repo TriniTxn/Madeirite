@@ -117,7 +117,7 @@ export default async function EstoquePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/30">
-              {materiais.map((m) => {
+              {materiais.map((m: Material) => {
                 const status = getStatus(m)
                 const pct = getPorcentagem(m.quantidade, m.minimo)
                 return (
