@@ -213,7 +213,7 @@ export default async function EstoquePage() {
               Reposição urgente necessária
             </p>
             <div className="flex flex-wrap gap-2">
-              {itensCriticos.map((m) => (
+              {itensCriticos.map((m: Material) => (
                 <span key={m.id} className="text-[10px] font-mono bg-red-500/10 border border-red-500/20 text-red-300/70 px-2 py-0.5 rounded">
                   {m.nome}
                 </span>
