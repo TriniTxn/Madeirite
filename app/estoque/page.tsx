@@ -3,7 +3,6 @@ import { Package, AlertTriangle, TrendingDown } from "lucide-react"
 import { ModalNovoMaterial } from "@/components/modal-novo-material"
 import { ModalEditarMaterial } from "@/components/modal-editar-material"
 import { removerMaterial } from "./actions"
-import type { Material } from "@prisma/client"
 
 export default async function EstoquePage() {
   const materiais = await prisma.material.findMany({
