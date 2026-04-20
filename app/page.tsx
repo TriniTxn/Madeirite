@@ -32,9 +32,12 @@ export default async function Dashboard() {
   const projetosRecentes = projetos.slice(0, 3)
   
 
-  // Métrica de exemplo para tarefas hoje (Você pode filtrar seus ChecklistItems por data de conclusão se tiver)
-  const tarefasHoje = 12 
-  const totalTarefasHoje = 15
+  const tarefasDosProjetosAtivos = projetos
+    .filter(p => p.status !== "Finalizado" && p.status !== "Arquivado")
+    .flatMap(p => p.itens ?? []);
+
+  const tarefasHoje = tarefasDosProjetosAtivos.length;
+  const totalTarefasHoje = tarefasDosProjetosAtivos.filter(i => i.feito).length
 
   function getProgresso(itens: { feito: boolean }[]) {
     if (itens.length === 0) return 0

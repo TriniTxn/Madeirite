@@ -29,12 +29,13 @@ model Projeto {
 }
 
 model ChecklistItem {
-  id        Int     @id @default(autoincrement())
-  titulo    String
-  feito     Boolean @default(false)
-  ordem     Int
-  projeto   Projeto @relation(fields: [projetoId], references: [id])
-  projetoId Int
+  id          Int     @id @default(autoincrement())
+  titulo      String
+  feito       Boolean @default(false)
+  concluidoEm DateTime? @updatedAt
+  ordem       Int
+  projeto     Projeto @relation(fields: [projetoId], references: [id])
+  projetoId   Int
 }
 
 model Material {

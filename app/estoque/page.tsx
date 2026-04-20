@@ -3,15 +3,17 @@ import { Package, AlertTriangle, TrendingDown } from "lucide-react"
 import { ModalNovoMaterial } from "@/components/modal-novo-material"
 import { ModalEditarMaterial } from "@/components/modal-editar-material"
 import { removerMaterial } from "./actions"
+import type { Material } from "@prisma/client"
 
 export default async function EstoquePage() {
   const materiais = await prisma.material.findMany({
     orderBy: { nome: "asc" }
   })
+  type Material = typeof materiais[number]
 
-  const itensAbaixoDoMinimo = materiais.filter(m => m.quantidade <= m.minimo && m.quantidade > 0)
-  const itensCriticos = materiais.filter(m => m.quantidade === 0)
-  const itensOk = materiais.filter(m => m.quantidade > m.minimo)
+  const itensAbaixoDoMinimo = materiais.filter((m: Material) => m.quantidade <= m.minimo && m.quantidade > 0)
+  const itensCriticos = materiais.filter((m: Material) => m.quantidade === 0)
+  const itensOk = materiais.filter((m: Material) => m.quantidade > m.minimo)
 
   function getStatus(m: { quantidade: number; minimo: number }) {
     if (m.quantidade === 0) return "CRÍTICO"
