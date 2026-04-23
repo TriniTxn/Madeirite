@@ -7,6 +7,8 @@ import {
   PackageX, Wrench, CheckCircle2, User 
 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 export default async function Dashboard() {
   const [projetos, materiais] = await Promise.all([
     prisma.projeto.findMany({
@@ -38,6 +40,8 @@ export default async function Dashboard() {
 
   const tarefasHoje = tarefasDosProjetosAtivos.length;
   const totalTarefasHoje = tarefasDosProjetosAtivos.filter(i => i.feito).length
+
+  const eventosRadar = gerarEventosRadar(projetos, materiais)
 
   function getProgresso(itens: { feito: boolean }[]) {
     if (itens.length === 0) return 0
@@ -146,7 +150,7 @@ export default async function Dashboard() {
           </div>
           
           <div className="text-4xl font-bold text-white tracking-tighter group-hover:text-emerald-400 transition-colors">
-            {tarefasHoje}<span className="text-lg text-zinc-700 font-normal">/{totalTarefasHoje}</span>
+            {totalTarefasHoje}<span className="text-lg text-zinc-700 font-normal">/{tarefasHoje}</span>
           </div>
           <p className="text-[10px] text-zinc-600 mt-2 font-mono uppercase">Tarefas concluídas</p>
         </div>
@@ -238,12 +242,44 @@ export default async function Dashboard() {
               <Activity size={16} className="text-zinc-600" />
               <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Radar da Oficina</h2>
             </div>
-            
+
             <div className="space-y-6">
-              {/* Logs estáticos para exemplo - criar um model no Prisma depois para Atividade!!! */}
-              <ActivityItem icon={PackageX} color="text-red-400" bg="bg-red-400/10" title="Pregos 18mm esgotados" time="Agora" />
-              <ActivityItem icon={Wrench} color="text-amber-400" bg="bg-amber-400/10" title="Iniciada montagem: Armário Jose" time="Há 12m" />
-              <ActivityItem icon={CheckCircle2} color="text-emerald-400" bg="bg-emerald-400/10" title="Checklist concluído: Giovanna" time="Há 2h" isLast />
+              {eventosRadar.length === 0 ? (
+                <p className="text-xs text-zinc-600 font-mono">Nenhuma atividade recente.</p>
+              ) : (
+                eventosRadar.map((evento, i) => {
+                  const isLast = i === eventosRadar.length - 1
+
+                  const iconMap = {
+                    red:     { Icon: PackageX,      cor: "text-red-400",     bg: "bg-red-400/10"     },
+                    amber:   { Icon: Package,        cor: "text-amber-400",   bg: "bg-amber-400/10"   },
+                    emerald: { Icon: CheckCircle2,  cor: "text-emerald-400", bg: "bg-emerald-400/10" },
+                    blue:    { Icon: FolderOpen,    cor: "text-blue-400",    bg: "bg-blue-400/10"    },
+                  }
+
+                  const { Icon, cor, bg } = iconMap[evento.cor]
+
+                  const tempoRelativo = (() => {
+                    const diff = (Date.now() - evento.tempo.getTime()) / 1000
+                    if (diff < 60)           return "Agora"
+                    if (diff < 3600)         return `Há ${Math.floor(diff / 60)}m`
+                    if (diff < 86400)        return `Há ${Math.floor(diff / 3600)}h`
+                    return `Há ${Math.floor(diff / 86400)}d`
+                  })()
+
+                  return (
+                    <ActivityItem
+                      key={i}
+                      icon={Icon}
+                      color={cor}
+                      bg={bg}
+                      title={evento.titulo}
+                      time={tempoRelativo}
+                      isLast={isLast}
+                    />
+                  )
+                })
+              )}
             </div>
           </div>
 
@@ -304,4 +340,76 @@ function ActivityItem({ icon: Icon, color, bg, title, time, isLast = false }: an
       </div>
     </div>
   )
+}
+
+function gerarEventosRadar(
+  projetos: any[],
+  materiais: any[]
+) {
+  const eventos: {
+    tipo: "projeto" | "tarefa" | "estoque"
+    titulo: string
+    tempo: Date
+    cor: "red" | "amber" | "emerald" | "blue"
+  }[] = []
+
+  // Novos projetos criados
+  for (const p of projetos) {
+    eventos.push({
+      tipo: "projeto",
+      titulo: `Novo projeto: ${p.nome}`,
+      tempo: p.criadoEm,
+      cor: "blue",
+    })
+  }
+
+  // Status mudou para "Em Produção" — usa criadoEm como proxy
+  for (const p of projetos) {
+    if (p.status === "Em Produção") {
+      eventos.push({
+        tipo: "projeto",
+        titulo: `Em produção: ${p.nome}`,
+        tempo: p.criadoEm,
+        cor: "amber",
+      })
+    }
+  }
+
+  // Tarefas concluídas — usa concluidoEm do ChecklistItem
+  for (const p of projetos) {
+    for (const item of p.itens) {
+      if (item.feito && item.concluidoEm) {
+        eventos.push({
+          tipo: "tarefa",
+          titulo: `Tarefa concluída: ${item.titulo}`,
+          tempo: item.concluidoEm,
+          cor: "emerald",
+        })
+      }
+    }
+  }
+
+  // Estoque zerado ou baixo
+  for (const m of materiais) {
+    if (m.quantidade === 0) {
+      eventos.push({
+        tipo: "estoque",
+        titulo: `${m.nome} esgotado`,
+        tempo: new Date(), 
+        cor: "red",
+      })
+    } else if (m.quantidade <= m.minimo) {
+      eventos.push({
+        tipo: "estoque",
+        titulo: `Estoque baixo: ${m.nome}`,
+        tempo: new Date(),
+        cor: "amber",
+      })
+    }
+  }
+
+  // Ordenação do mais recente pro mais antigo e pega os 5 primeiros
+  return eventos
+    .sort((a, b) => b.tempo.getTime() - a.tempo.getTime())
+    .slice(0, 4)
 }
