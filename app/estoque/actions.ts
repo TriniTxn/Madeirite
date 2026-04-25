@@ -53,14 +53,14 @@ export async function atualizarMaterial(formData: FormData) {
 
   if (quantidade === 0) {
     await enviarMensagemWhatsApp(
-      `🚨 *MadeiraApp — Estoque Crítico*\n\n` +
+      `🚨 *MadeiriteApp — Estoque Crítico*\n\n` +
       `O material *${nome}* está zerado!\n` +
       `Categoria: ${categoria}\n` +
       `Providencie a reposição urgente.`
     )
   } else if (quantidade <= minimo) {
     await enviarMensagemWhatsApp(
-      `⚠️ *MadeiraApp — Estoque Baixo*\n\n` +
+      `⚠️ *MadeiriteApp — Estoque Baixo*\n\n` +
       `O material *${nome}* está abaixo do mínimo.\n` +
       `Quantidade atual: ${quantidade} ${unidade}\n` +
       `Mínimo configurado: ${minimo} ${unidade}`

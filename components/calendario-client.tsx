@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Clock, CalendarDays } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react"
 import Link from "next/link"
 import { formatarData } from "@/lib/utils"
 
@@ -23,6 +23,12 @@ const MESES = [
 
 const HOJE = new Date()
 HOJE.setHours(0, 0, 0, 0)
+
+function getDiffDias(dataEntrega: Date | string): number {
+  const dataStr = new Date(dataEntrega).toISOString().split("T")[0]
+  const hojeStr = new Date().toISOString().split("T")[0]
+  return (new Date(dataStr).getTime() - new Date(hojeStr).getTime()) / (1000 * 60 * 60 * 24)
+}
 
 export function CalendarioClient({ projetos }: Props) {
   const [mes, setMes] = useState(HOJE.getMonth())
@@ -49,8 +55,9 @@ export function CalendarioClient({ projetos }: Props) {
 
   function projetosDoDia(dia: number) {
     return projetos.filter((p) => {
-      const d = new Date(p.dataEntrega)
-      return d.getUTCDate() === dia && d.getUTCMonth() === mes && d.getUTCFullYear() === ano
+      const dataStr = new Date(p.dataEntrega).toISOString().split("T")[0]
+      const [aAno, aMes, aDia] = dataStr.split("-").map(Number)
+      return aDia === dia && (aMes - 1) === mes && aAno === ano
     })
   }
 
@@ -60,13 +67,17 @@ export function CalendarioClient({ projetos }: Props) {
 
   function isPrazoProximo(dia: number) {
     const diff = Math.ceil((new Date(ano, mes, dia).getTime() - HOJE.getTime()) / (1000 * 60 * 60 * 24))
-    return diff >= 0 && diff <= 3
+    return diff >= 0 && diff <= 30
   }
 
+  const alertasUrgentes = projetos.filter(p => {
+    const diff = getDiffDias(p.dataEntrega)
+    return diff >= 0 && diff <= 7 && p.status !== "Finalizado"
+  })
+
   const alertas = projetos.filter(p => {
-    const d = new Date(p.dataEntrega)
-    const diff = (d.getTime() - HOJE.getTime()) / (1000 * 60 * 60 * 24)
-    return diff >= 0 && diff <= 3 && p.status !== "Finalizado"
+    const diff = getDiffDias(p.dataEntrega)
+    return diff >= 0 && diff <= 30 && p.status !== "Finalizado"
   })
 
   return (
@@ -84,41 +95,49 @@ export function CalendarioClient({ projetos }: Props) {
           <p className="text-zinc-500 text-sm mt-1">Cronograma de montagens e entregas.</p>
         </div>
 
-        {/* Navegação de mês */}
         <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 p-1 rounded-xl">
-          <button
-            onClick={mesAnterior}
-            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-all"
-          >
+          <button onClick={mesAnterior} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-all">
             <ChevronLeft size={16} />
           </button>
           <span className="px-4 text-sm font-mono font-medium text-zinc-200 uppercase tracking-widest min-w-[160px] text-center">
             {MESES[mes]} {ano}
           </span>
-          <button
-            onClick={proximoMes}
-            className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-all"
-          >
+          <button onClick={proximoMes} className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-all">
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      {/* Alerta de prazos críticos */}
+      {/* Alerta urgente — 7 dias */}
+      {alertasUrgentes.length > 0 && (
+        <div className="flex items-start gap-3 bg-red-500/5 border border-red-500/20 rounded-2xl p-4">
+          <Clock size={14} className="text-red-400 mt-0.5 flex-shrink-0 animate-pulse" />
+          <div className="flex-1">
+            <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1.5">
+              ⚠ {alertasUrgentes.length} {alertasUrgentes.length === 1 ? "entrega urgente" : "entregas urgentes"} — próximos 7 dias
+            </p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {alertasUrgentes.map(p => (
+                <Link key={p.id} href={`/projetos/${p.id}`} className="text-xs text-red-300/60 hover:text-red-300 transition-colors">
+                  • {p.nome} — {formatarData(p.dataEntrega)}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alerta geral — 30 dias */}
       {alertas.length > 0 && (
         <div className="flex items-start gap-3 bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4">
           <Clock size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-1.5">
-              {alertas.length} {alertas.length === 1 ? "entrega" : "entregas"} nos próximos 3 dias
+              {alertas.length} {alertas.length === 1 ? "entrega" : "entregas"} nos próximos 30 dias
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {alertas.map(p => (
-                <Link
-                  key={p.id}
-                  href={`/projetos/${p.id}`}
-                  className="text-xs text-amber-300/60 hover:text-amber-300 transition-colors"
-                >
+                <Link key={p.id} href={`/projetos/${p.id}`} className="text-xs text-amber-300/60 hover:text-amber-300 transition-colors">
                   • {p.nome} — {formatarData(p.dataEntrega)}
                 </Link>
               ))}
@@ -129,24 +148,22 @@ export function CalendarioClient({ projetos }: Props) {
 
       {/* Calendário */}
       <div className="border border-zinc-800/60 rounded-2xl overflow-hidden">
-
-        {/* Cabeçalho dos dias */}
         <div className="grid grid-cols-7 bg-zinc-900/30 border-b border-zinc-800/60">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dia) => (
-            <div
-              key={dia}
-              className="py-3 text-center text-[10px] font-mono text-zinc-600 uppercase tracking-[0.2em]"
-            >
+            <div key={dia} className="py-3 text-center text-[10px] font-mono text-zinc-600 uppercase tracking-[0.2em]">
               {dia}
             </div>
           ))}
         </div>
 
-        {/* Células */}
         <div className="grid grid-cols-7">
           {celulas.map((dia, i) => {
             const eventos = dia ? projetosDoDia(dia) : []
             const hoje = dia ? eHoje(dia) : false
+            const temUrgente = eventos.some(p => {
+              const diff = getDiffDias(p.dataEntrega)
+              return diff >= 0 && diff <= 7 && p.status !== "Finalizado"
+            })
             const prazoProximo = dia ? isPrazoProximo(dia) && eventos.some(p => p.status !== "Finalizado") : false
 
             return (
@@ -155,45 +172,45 @@ export function CalendarioClient({ projetos }: Props) {
                 className={`min-h-[110px] p-2.5 border-r border-b border-zinc-800/40 transition-colors group relative
                   ${!dia ? "opacity-20 pointer-events-none" : "hover:bg-zinc-900/20"}
                   ${hoje ? "bg-white/[0.03] border-l border-l-white/20" : ""}
-                  ${prazoProximo && !hoje ? "bg-amber-500/[0.03]" : ""}
+                  ${temUrgente && !hoje ? "bg-red-500/[0.05]" : prazoProximo && !hoje ? "bg-amber-500/[0.03]" : ""}
                 `}
               >
-                {/* Número do dia */}
                 {dia && (
                   <div className="flex items-center justify-between mb-1.5">
                     <span className={`text-xs font-mono transition-colors ${
-                      hoje
-                        ? "text-white font-bold border-b border-white pb-0.5"
-                        : "text-zinc-600 group-hover:text-zinc-400"
+                      hoje ? "text-white font-bold border-b border-white pb-0.5" : "text-zinc-600 group-hover:text-zinc-400"
                     }`}>
                       {String(dia).padStart(2, "0")}
                     </span>
-                    {prazoProximo && !hoje && (
-                      <span className="w-1 h-1 rounded-full bg-amber-400" />
-                    )}
-                    {hoje && (
-                      <span className="w-1 h-1 rounded-full bg-white" />
-                    )}
+                    {temUrgente && !hoje && <span className="w-1 h-1 rounded-full bg-red-400" />}
+                    {!temUrgente && prazoProximo && !hoje && <span className="w-1 h-1 rounded-full bg-amber-400" />}
+                    {hoje && <span className="w-1 h-1 rounded-full bg-white" />}
                   </div>
                 )}
 
-                {/* Eventos */}
                 <div className="space-y-1">
-                  {eventos.map((p) => (
-                    <Link
-                      key={p.id}
-                      href={`/projetos/${p.id}`}
-                      className={`block text-[9px] font-medium px-1.5 py-1 rounded-md truncate transition-all hover:opacity-80 ${
-                        p.status === "Finalizado"
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-                          : isPrazoProximo(dia!)
-                          ? "bg-amber-500/15 text-amber-300 border border-amber-500/20"
-                          : "bg-zinc-700/50 text-zinc-200 border border-zinc-700/50"
-                      }`}
-                    >
-                      {p.nome}
-                    </Link>
-                  ))}
+                  {eventos.map((p) => {
+                    const diff = getDiffDias(p.dataEntrega)
+                    const isUrgente = diff >= 0 && diff <= 7 && p.status !== "Finalizado"
+
+                    return (
+                      <Link
+                        key={p.id}
+                        href={`/projetos/${p.id}`}
+                        className={`block text-[9px] font-medium px-1.5 py-1 rounded-md truncate transition-all hover:opacity-80 ${
+                          p.status === "Finalizado"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                            : isUrgente
+                            ? "bg-red-500/15 text-red-300 border border-red-500/20"
+                            : isPrazoProximo(dia!)
+                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/20"
+                            : "bg-zinc-700/50 text-zinc-200 border border-zinc-700/50"
+                        }`}
+                      >
+                        {p.nome}
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
             )
@@ -214,6 +231,10 @@ export function CalendarioClient({ projetos }: Props) {
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded bg-amber-500/15 border border-amber-500/20" />
           <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Prazo próximo</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded bg-red-500/15 border border-red-500/20" />
+          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Urgente</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-white border-b border-white pb-0.5">14</span>
