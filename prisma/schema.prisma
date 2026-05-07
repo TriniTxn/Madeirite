@@ -25,7 +25,17 @@ model Projeto {
   cliente     Cliente         @relation(fields: [clienteId], references: [id])
   clienteId   Int
   itens       ChecklistItem[]
+  imagens     ProjetoImagem[]
   criadoEm    DateTime        @default(now())
+}
+
+model ProjetoImagem {
+  id          Int      @id @default(autoincrement())
+  url         String
+  ordem       Int      @default(0)
+  projeto     Projeto  @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  projetoId   Int
+  criadoEm    DateTime @default(now())
 }
 
 model ChecklistItem {

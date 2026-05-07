@@ -200,3 +200,36 @@ export async function salvarImagemProjeto(formData: FormData) {
 
   revalidatePath(`/projetos/${projetoId}`);
 }
+
+export async function adicionarImagemProjeto(formData: FormData) {
+  const projetoId = parseInt(formData.get("projetoId") as string)
+  const url = formData.get("url") as string
+
+  // Máximo 3 imagens
+  const total = await prisma.projetoImagem.count({ where: { projetoId } })
+  if (total >= 3) return { erro: "Limite de 3 imagens atingido" }
+
+  const ultimaOrdem = await prisma.projetoImagem.findFirst({
+    where: { projetoId },
+    orderBy: { ordem: "desc" },
+  })
+
+  await prisma.projetoImagem.create({
+    data: {
+      url,
+      projetoId,
+      ordem: (ultimaOrdem?.ordem ?? 0) + 1,
+    },
+  })
+
+  revalidatePath(`/projetos/${projetoId}`)
+}
+
+export async function removerImagemProjeto(formData: FormData) {
+  const imagemId = parseInt(formData.get("imagemId") as string)
+  const projetoId = parseInt(formData.get("projetoId") as string)
+
+  await prisma.projetoImagem.delete({ where: { id: imagemId } })
+
+  revalidatePath(`/projetos/${projetoId}`)
+}

@@ -1,140 +1,128 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Calendar, User, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
+import { ChevronLeft, Calendar, User } from "lucide-react";
 import { AnotacoesAutoSave } from "@/components/anotacoes-auto-save";
 import { ModalEditarProjeto } from "@/components/modal-editar-projeto";
 import { ChecklistDraggable } from "@/components/checklist-draggable";
 import { formatarData } from "@/lib/utils";
-import { ImagemProjeto } from "@/components/imagem-projeto"
+import { ImagemProjeto, DestaqueInterativo } from "@/components/imagem-projeto";
 
 type Props = {
     params: Promise<{ id: string }>;
 };
 
 export default async function DetalheProjetoPage({ params }: Props) {
-    const resolvedParams = await params;
-    const projetoId = parseInt(resolvedParams.id);
-
-    if (isNaN(projetoId)) return notFound();
+    const { id } = await params;
+    const projetoId = parseInt(id);
 
     const projeto = await prisma.projeto.findUnique({
         where: { id: projetoId },
         include: {
             cliente: true,
-            itens: { orderBy: { ordem: 'asc' } }
+            itens: { orderBy: { ordem: 'asc' } },
+            imagens: { orderBy: { ordem: 'asc' } },
         },
     });
 
     if (!projeto) return notFound();
 
-    const total = projeto.itens.length;
     const feitos = projeto.itens.filter((i) => i.feito).length;
-    const progresso = total > 0 ? Math.round((feitos / total) * 100) : 0;
+    const progresso = projeto.itens.length > 0 ? Math.round((feitos / projeto.itens.length) * 100) : 0;
+    
+    const fotoDestaque = projeto.imagens[0];
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 p-6">
-            {/* Botão Voltar */}
-            <Link href="/projetos" className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors text-xs font-mono tracking-widest">
-                <ChevronLeft size={14} /> VOLTAR PARA LISTA
-            </Link>
+        <div className="max-w-7xl mx-auto space-y-6 p-6 pb-20">
+            
+            {/* NAVEGAÇÃO TOPO */}
+            <nav>
+                <Link 
+                    href="/projetos" 
+                    className="group flex items-center gap-2 text-zinc-500 hover:text-white transition-all text-[10px] font-mono uppercase tracking-[0.3em]"
+                >
+                    <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+                    Voltar para a lista
+                </Link>
+            </nav>
 
-            {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-zinc-800/50 pb-8">
-                <div className="space-y-3">
+            {/* HEADER */}
+            <header className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-6 bg-[#09090b] border border-zinc-800/50 p-8 rounded-[40px] shadow-2xl">
+                <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-mono text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded uppercase">
-                            Reference: #{String(projeto.id).padStart(4, "0")}
+                        <span className="text-[10px] font-mono text-zinc-500 border border-zinc-800/50 px-2 py-0.5 rounded uppercase">
+                            REF: #{String(projeto.id).padStart(4, "0")}
                         </span>
                         <StatusBadge status={projeto.status} />
-                        <ModalEditarProjeto projeto={{
-                            id: projeto.id,
-                            nome: projeto.nome,
-                            status: projeto.status,
-                            dataEntrega: projeto.dataEntrega,
-                            cliente: {
-                                nome: projeto.cliente.nome,
-                                telefone: projeto.cliente.telefone
-                            }
-                        }} />
+                        
+                        <div className="ml-2 border-l border-zinc-800/50 pl-4">
+                            <ModalEditarProjeto projeto={projeto as any} />
+                        </div>
                     </div>
-                    <h1 className="text-4xl font-bold tracking-tighter text-white">
+                    
+                    <h1 className="text-6xl font-black tracking-tighter text-white uppercase italic leading-none">
                         {projeto.nome}
                     </h1>
-                    <div className="flex flex-wrap gap-6 text-zinc-400 text-xs">
-                        <span className="flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-zinc-800">
-                            <User size={14} className="text-zinc-600" /> {projeto.cliente.nome}
-                        </span>
-                        <span className="flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-zinc-800">
-                            <Calendar size={14} className="text-zinc-600" />
-                            Entrega: {formatarData(projeto.dataEntrega)}
-                        </span>
+                    
+                    <div className="flex flex-wrap gap-6 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.15em]">
+                        <span className="flex items-center gap-2"><User size={12} /> {projeto.cliente.nome}</span>
+                        <span className="flex items-center gap-2"><Calendar size={12} /> {formatarData(projeto.dataEntrega)}</span>
                     </div>
                 </div>
 
-                <div className="text-right">
-                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-1">Status de Execução</p>
-                    <p className="text-5xl font-black text-white tabular-nums">{progresso}%</p>
+                <div className="lg:text-right border-t lg:border-t-0 lg:border-l border-zinc-800/50 pt-6 lg:pt-0 lg:pl-10">
+                    <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] mb-1">Execução</p>
+                    <p className="text-8xl font-black text-white tabular-nums tracking-tighter leading-none">
+                        {progresso}<span className="text-2xl text-zinc-800 ml-1">%</span>
+                    </p>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Checklist Principal — ocupa 2/3 */}
-                <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
+                
+                <div className="lg:col-span-2 space-y-10">
+                    
+                    {/* QUADRO PRINCIPAL */}
+                    {fotoDestaque ? (
+                    <DestaqueInterativo url={fotoDestaque.url} />
+                    ) : (
+                    <div className="w-full h-40 rounded-[40px] border border-dashed border-zinc-800/50 flex items-center justify-center text-zinc-600 font-mono text-[10px] uppercase tracking-widest">
+                        Nenhuma imagem
+                    </div>
+                    )}
 
-                    {/* Imagem do projeto — Moldura que se adapta sem vazar */}
-                    {projeto.fotoUrl && (
-                        <div className="flex justify-start mb-8">
-                            <div className="inline-block rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-900/40 p-0 line-height-0">
-                                <img
-                                    src={projeto.fotoUrl}
-                                    alt="Foto do projeto"
-                                    className="max-w-full md:max-w-[400px] h-auto block object-contain"
-                                />
-                            </div>
+                    {/* LISTA DE TAREFAS */}
+                    <section className="space-y-6">
+                        <div className="flex items-center gap-3 ml-2">
+                            <div className="w-1.5 h-4 bg-white rounded-full" />
+                            <h3 className="text-[10px] font-mono text-zinc-400 uppercase tracking-[0.3em] font-black">Linha de Produção</h3>
                         </div>
-                    )}
-
-                    {/* Upload quando não tem imagem */}
-                    {!projeto.fotoUrl && (
-                    <ImagemProjeto
-                        projetoId={projeto.id}
-                        imagemAtual={projeto.fotoUrl}
-                    />
-                    )}
-
-                    <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                    <CheckCircle2 size={14} /> Tasks de Produção
-                    </h3>
-
-                    <ChecklistDraggable itens={projeto.itens} projetoId={projeto.id} />
+                        <ChecklistDraggable itens={projeto.itens} projetoId={projeto.id} />
+                    </section>
                 </div>
 
-                {/* Sidebar — ocupa 1/3 */}
-                <div className="space-y-6">
-                    {/* Mostra o componente de upload na sidebar só quando já tem imagem */}
-                    {projeto.fotoUrl && (
-                    <ImagemProjeto
-                        projetoId={projeto.id}
-                        imagemAtual={projeto.fotoUrl}
-                    />
-                    )}
-                    <AnotacoesAutoSave
-                    projetoId={projeto.id}
-                    valorInicial={projeto.anotacoes}
-                    />
-                </div>
-                </div>
+                <aside className="space-y-8">
+                    {/* Aqui o ImagemProjeto já tem a lógica de abrir o modal no clique */}
+                    <ImagemProjeto projetoId={projeto.id} imagens={projeto.imagens} />
+
+                    <AnotacoesAutoSave projetoId={projeto.id} valorInicial={projeto.anotacoes} />
+                </aside>
+            </div>
         </div>
     );
 }
 
 function StatusBadge({ status }: { status: string }) {
-    const isPending = status === "Em andamento" || status === "Aguardando Material";
+    const styles: Record<string, string> = {
+        "Finalizado": "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+        "Aguardando Material": "bg-amber-500/10 text-amber-500 border-amber-500/20",
+        "Em Produção": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+        "Arquivado": "bg-zinc-500/10 text-zinc-500 border-zinc-500/20",
+    }
     return (
-        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${isPending ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}>
-            {status.toUpperCase()}
+        <span className={`text-[9px] font-black px-3 py-1 rounded-md border tracking-[0.1em] uppercase ${styles[status] || styles["Em Produção"]}`}>
+            {status}
         </span>
     );
 }

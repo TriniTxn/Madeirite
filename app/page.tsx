@@ -7,7 +7,7 @@ import {
   PackageX, Wrench, CheckCircle2, User 
 } from "lucide-react"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 30
 
 export default async function Dashboard() {
   const [projetos, materiais] = await Promise.all([
