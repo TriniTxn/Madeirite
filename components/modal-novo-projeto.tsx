@@ -108,6 +108,9 @@ export function ModalNovoProjeto() {
             >
               <option>Em Produção</option>
               <option>Aguardando Material</option>
+              <option>Aprovando Projeto</option>
+              <option>Pré Montagem</option>
+              <option>Montagem</option>
               <option>Finalizado</option>
             </select>
           </div>
