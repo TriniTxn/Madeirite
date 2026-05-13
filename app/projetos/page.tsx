@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db"
-import { Search, Filter, Plus, MessageCircle, Calendar, ChevronRight, LayoutGrid } from "lucide-react"
+import { Search, Filter, MessageCircle, Calendar, ChevronRight, LayoutGrid } from "lucide-react"
 import { ModalNovoProjeto } from "@/components/modal-novo-projeto"
 import Link from "next/link"
 import { formatarData } from "@/lib/utils"
@@ -10,14 +10,14 @@ export default async function ProjetosPage() {
     orderBy: { criadoEm: "desc" }
   })
 
-  // Separar por grupo
-  const ativos = projetos.filter(p => p.status === "Em Produção" || p.status === "Aguardando Material")
+  const ativos = projetos.filter(p =>
+    ["Em Produção", "Aguardando Material", "Aprovando Projeto", "Pré Montagem", "Montagem"].includes(p.status)
+  )
   const finalizados = projetos.filter(p => p.status === "Finalizado")
   const arquivados = projetos.filter(p => p.status === "Arquivado")
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto">
-      {/* Header — mantém igual */}
+    <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-800/50 pb-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -30,7 +30,6 @@ export default async function ProjetosPage() {
         <ModalNovoProjeto />
       </div>
 
-      {/* Barra de Filtros — mantém igual */}
       <div className="flex flex-col md:flex-row items-center gap-4 p-3 bg-zinc-950/50 border border-zinc-800/50 rounded-2xl shadow-xl">
         <div className="flex-1 w-full relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
@@ -48,7 +47,6 @@ export default async function ProjetosPage() {
         </div>
       </div>
 
-      {/* Seção: Ativos */}
       <SecaoProjetoS
         titulo="Em Produção"
         subtitulo="Projetos ativos na linha de produção"
@@ -57,7 +55,6 @@ export default async function ProjetosPage() {
         projetos={ativos}
       />
 
-      {/* Seção: Finalizados */}
       {finalizados.length > 0 && (
         <SecaoProjetoS
           titulo="Finalizados"
@@ -68,7 +65,6 @@ export default async function ProjetosPage() {
         />
       )}
 
-      {/* Seção: Arquivados */}
       {arquivados.length > 0 && (
         <SecaoProjetoS
           titulo="Arquivados"
@@ -83,7 +79,6 @@ export default async function ProjetosPage() {
   )
 }
 
-// Nova seção reutilizável
 function SecaoProjetoS({
   titulo, subtitulo, cor, dot, projetos, opaco = false
 }: {
@@ -96,7 +91,6 @@ function SecaoProjetoS({
 }) {
   return (
     <div className={`space-y-4 ${opaco ? "opacity-60 hover:opacity-100 transition-opacity duration-300" : ""}`}>
-      {/* Cabeçalho da seção */}
       <div className="flex items-center gap-3 px-1">
         <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
         <h2 className={`text-xs font-bold uppercase tracking-[0.2em] font-mono ${cor}`}>
@@ -109,7 +103,6 @@ function SecaoProjetoS({
         <span className="text-[10px] text-zinc-600">{subtitulo}</span>
       </div>
 
-      {/* Cards ou estado vazio */}
       {projetos.length === 0 ? (
         <div className="border border-dashed border-zinc-800 rounded-2xl p-12 text-center">
           <p className="text-zinc-600 text-xs font-mono uppercase tracking-widest">
@@ -145,17 +138,15 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
   const isAtrasado = diffDias < 0 && projeto.status !== "Finalizado"
 
   return (
-    /* CONTAINER PRINCIPAL: Agora com fundo sólido e hover de subida */
-    <div className="group relative bg-[#09090b] border border-zinc-800 rounded-2xl p-6 transition-all duration-300 
+    <div className="group relative bg-[#09090b] border border-zinc-800 rounded-2xl p-6 transition-all duration-300
                     hover:border-zinc-400 hover:-translate-y-2 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.8)]">
-      
-      {/* HEADER: Data e ID com contraste */}
+
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col gap-1">
           <StatusBadge status={projeto.status} />
           <span className="text-[10px] font-mono text-zinc-600">ID-{String(projeto.id).padStart(4, "0")}</span>
         </div>
-        
+
         <div className={`text-right ${
           isAtrasado ? "text-red-500" :
           projeto.status === "Finalizado" ? "text-emerald-500" :
@@ -164,15 +155,14 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
           <div className="flex items-center justify-end gap-1 text-[10px] font-bold uppercase tracking-wider">
             <Calendar size={12} />
             {projeto.status === "Finalizado" ? "Finalizado" :
-            isAtrasado ? "Atrasado" :
-            diffDias === 0 ? "Hoje" :
-            `Em ${diffDias}d`}
+             isAtrasado ? "Atrasado" :
+             diffDias === 0 ? "Hoje" :
+             `Em ${diffDias}d`}
           </div>
           <span className="text-[9px] font-mono opacity-60">{formatarData(projeto.dataEntrega)}</span>
         </div>
       </div>
 
-      {/* TÍTULO: Branco real para leitura imediata */}
       <div className="mb-8">
         <h3 className="text-xl font-bold text-white group-hover:text-amber-500 transition-colors truncate">
           {projeto.nome}
@@ -180,7 +170,6 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
         <p className="text-zinc-500 text-sm mt-1 font-medium">{projeto.cliente.nome}</p>
       </div>
 
-      {/* PROGRESSO: Estilo "Capsule" mais moderno */}
       <div className="space-y-3 mb-6">
         <div className="flex justify-between items-end">
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
@@ -191,26 +180,26 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
         <div className="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
           <div
             className={`h-full transition-all duration-1000 ease-out ${
-              isAtrasado ? 'bg-red-600' : 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
+              isAtrasado ? "bg-red-600" :
+              projeto.status === "Finalizado" ? "bg-emerald-500" :
+              "bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
             }`}
             style={{ width: `${progresso}%` }}
           />
         </div>
       </div>
 
-      {/* RODAPÉ: Ações com hover individual */}
       <div className="pt-4 border-t border-zinc-800/50 flex justify-between items-center">
-          <button className="p-2 rounded-lg text-zinc-600 hover:text-emerald-500 hover:bg-emerald-500/5 transition-all">
-            <MessageCircle size={18} />
-          </button>
-          
-          <Link
-            href={`/projetos/${projeto.id}`}
-            className="flex items-center gap-2 text-xs font-bold text-zinc-400 group-hover:text-white transition-all"
-          >
-            DETALHES 
-            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
+        <button className="p-2 rounded-lg text-zinc-600 hover:text-emerald-500 hover:bg-emerald-500/5 transition-all">
+          <MessageCircle size={18} />
+        </button>
+        <Link
+          href={`/projetos/${projeto.id}`}
+          className="flex items-center gap-2 text-xs font-bold text-zinc-400 group-hover:text-white transition-all"
+        >
+          DETALHES
+          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+        </Link>
       </div>
     </div>
   )
@@ -218,13 +207,17 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    "Finalizado": "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-    "Aguardando Material": "bg-amber-500/10 text-amber-500 border-amber-500/20",
-    "Em andamento": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    "Aprovando Projeto":   "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    "Aguardando Material": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+    "Em Produção":         "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    "Pré Montagem":        "bg-orange-400/10 text-orange-300 border-orange-400/20",
+    "Montagem":            "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    "Finalizado":          "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    "Arquivado":           "bg-zinc-500/10 text-zinc-500 border-zinc-500/20",
   }
 
   return (
-    <div className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-tighter ${styles[status] || styles["Em andamento"]}`}>
+    <div className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-tighter ${styles[status] ?? "bg-amber-500/10 text-amber-400 border-amber-500/20"}`}>
       <span className="w-1 h-1 rounded-full bg-current animate-pulse" />
       {status}
     </div>
