@@ -10,6 +10,7 @@ export default async function ProjetosPage() {
     orderBy: { criadoEm: "desc" }
   })
 
+  // Separar por grupo
   const ativos = projetos.filter(p =>
     ["Em Produção", "Aguardando Material", "Aprovando Projeto", "Pré Montagem", "Montagem"].includes(p.status)
   )
@@ -18,6 +19,7 @@ export default async function ProjetosPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header — mantém igual */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-800/50 pb-8">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -30,6 +32,7 @@ export default async function ProjetosPage() {
         <ModalNovoProjeto />
       </div>
 
+      {/* Barra de Filtros — mantém igual */}
       <div className="flex flex-col md:flex-row items-center gap-4 p-3 bg-zinc-950/50 border border-zinc-800/50 rounded-2xl shadow-xl">
         <div className="flex-1 w-full relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
@@ -47,6 +50,7 @@ export default async function ProjetosPage() {
         </div>
       </div>
 
+      {/* Seção: Ativos */}
       <SecaoProjetoS
         titulo="Em Produção"
         subtitulo="Projetos ativos na linha de produção"
@@ -55,6 +59,7 @@ export default async function ProjetosPage() {
         projetos={ativos}
       />
 
+      {/* Seção: Finalizados */}
       {finalizados.length > 0 && (
         <SecaoProjetoS
           titulo="Finalizados"
@@ -65,6 +70,7 @@ export default async function ProjetosPage() {
         />
       )}
 
+      {/* Seção: Arquivados */}
       {arquivados.length > 0 && (
         <SecaoProjetoS
           titulo="Arquivados"
@@ -79,6 +85,7 @@ export default async function ProjetosPage() {
   )
 }
 
+// Nova seção reutilizável
 function SecaoProjetoS({
   titulo, subtitulo, cor, dot, projetos, opaco = false
 }: {
@@ -91,6 +98,7 @@ function SecaoProjetoS({
 }) {
   return (
     <div className={`space-y-4 ${opaco ? "opacity-60 hover:opacity-100 transition-opacity duration-300" : ""}`}>
+      {/* Cabeçalho da seção */}
       <div className="flex items-center gap-3 px-1">
         <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
         <h2 className={`text-xs font-bold uppercase tracking-[0.2em] font-mono ${cor}`}>
@@ -103,6 +111,7 @@ function SecaoProjetoS({
         <span className="text-[10px] text-zinc-600">{subtitulo}</span>
       </div>
 
+      {/* Cards ou estado vazio */}
       {projetos.length === 0 ? (
         <div className="border border-dashed border-zinc-800 rounded-2xl p-12 text-center">
           <p className="text-zinc-600 text-xs font-mono uppercase tracking-widest">
@@ -138,9 +147,11 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
   const isAtrasado = diffDias < 0 && projeto.status !== "Finalizado"
 
   return (
+    /* CONTAINER PRINCIPAL: Agora com fundo sólido e hover de subida */
     <div className="group relative bg-[#09090b] border border-zinc-800 rounded-2xl p-6 transition-all duration-300
                     hover:border-zinc-400 hover:-translate-y-2 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.8)]">
 
+      {/* HEADER: Data e ID com contraste */}
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col gap-1">
           <StatusBadge status={projeto.status} />
@@ -163,6 +174,7 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
         </div>
       </div>
 
+      {/* TÍTULO: Branco real para leitura imediata */}
       <div className="mb-8">
         <h3 className="text-xl font-bold text-white group-hover:text-amber-500 transition-colors truncate">
           {projeto.nome}
@@ -170,6 +182,7 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
         <p className="text-zinc-500 text-sm mt-1 font-medium">{projeto.cliente.nome}</p>
       </div>
 
+      {/* PROGRESSO: Estilo "Capsule" mais moderno */}
       <div className="space-y-3 mb-6">
         <div className="flex justify-between items-end">
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
@@ -189,6 +202,7 @@ function ProjetoCard({ projeto, progresso, feitos, total }: any) {
         </div>
       </div>
 
+      {/* RODAPÉ: Ações com hover individual */}
       <div className="pt-4 border-t border-zinc-800/50 flex justify-between items-center">
         <button className="p-2 rounded-lg text-zinc-600 hover:text-emerald-500 hover:bg-emerald-500/5 transition-all">
           <MessageCircle size={18} />

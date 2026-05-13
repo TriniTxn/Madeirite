@@ -35,6 +35,7 @@ export default async function DetalheProjetoPage({ params }: Props) {
     return (
         <div className="max-w-7xl mx-auto space-y-6 p-6 pb-20">
 
+            {/* NAVEGAÇÃO TOPO */}
             <nav>
                 <Link
                     href="/projetos"
@@ -45,6 +46,7 @@ export default async function DetalheProjetoPage({ params }: Props) {
                 </Link>
             </nav>
 
+            {/* HEADER */}
             <header className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-6 bg-[#09090b] border border-zinc-800/50 p-8 rounded-[40px] shadow-2xl">
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -52,6 +54,7 @@ export default async function DetalheProjetoPage({ params }: Props) {
                             REF: #{String(projeto.id).padStart(4, "0")}
                         </span>
                         <StatusBadge status={projeto.status} />
+                        {/* Botão de editar separado por divisor */}
                         <div className="ml-2 border-l border-zinc-800/50 pl-4">
                             <ModalEditarProjeto projeto={projeto as any} />
                         </div>
@@ -78,6 +81,8 @@ export default async function DetalheProjetoPage({ params }: Props) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
 
                 <div className="lg:col-span-2 space-y-10">
+
+                    {/* QUADRO PRINCIPAL */}
                     {fotoDestaque ? (
                         <DestaqueInterativo url={fotoDestaque.url} />
                     ) : (
@@ -86,6 +91,7 @@ export default async function DetalheProjetoPage({ params }: Props) {
                         </div>
                     )}
 
+                    {/* LISTA DE TAREFAS */}
                     <section className="space-y-6">
                         <div className="flex items-center gap-3 ml-2">
                             <div className="w-1.5 h-4 bg-white rounded-full" />
@@ -96,7 +102,9 @@ export default async function DetalheProjetoPage({ params }: Props) {
                 </div>
 
                 <aside className="space-y-8">
+                    {/* Aqui o ImagemProjeto já tem a lógica de abrir o modal no clique */}
                     <ImagemProjeto projetoId={projeto.id} imagens={projeto.imagens} />
+
                     <AnotacoesAutoSave projetoId={projeto.id} valorInicial={projeto.anotacoes} />
                 </aside>
             </div>
